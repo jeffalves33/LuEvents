@@ -1,0 +1,14 @@
+<!-- public/select-tickets.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Selecionar Ingressos</title>
+</head>
+<body>
+  <form action="/select-seats" method="POST">
+    <label for="tickets">Quantos ingressos você deseja comprar?</label>
+    <input type="number" id="tickets" name="tickets" min="1" max="10" required>
+    <button type="submit">Continuar</button>
+  </form>
+</body>
+</html>
