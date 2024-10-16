@@ -1,11 +1,70 @@
 <!-- public/index.ejs -->
 <!DOCTYPE html>
 <html>
-  <%- include('partials/head', { title: 'Evento' }) %>
-<body>
-  <div>
-    <img src="#" alt="Imagem do Evento">
-    <button onclick="window.location.href='/select-tickets'">Comprar Ingressos</button>
-  </div>
-</body>
+<%- include('partials/head', { title: 'Evento' }) %>
+
+  <body>
+    <div class="container d-flex flex-column justify-content-center align-items-center" style="height: 100%;">
+      <img src="#" alt="Imagem do Evento">
+      <div class="row justify-content-center w-100">
+        <button type="button" class="btn btn-success w-75 my-2 mx-4" data-bs-toggle="modal" data-bs-target="#loginComprarModal">Comprar
+          Ingressos</button>
+        <!--<button type="button" class="btn btn-success w-75 my-2 mx-4">
+          onclick="window.location.href='/select-tickets'">Comprar Ingressos</button>-->
+      </div>
+      <div class="row justify-content-center w-100">
+        <button type="button" class="btn btn-secondary w-75 my-2 mx-4" data-bs-toggle="modal" data-bs-target="#loginTrocarModal">Trocar
+          Ingressos</button>
+        <!--<button type="button" class="btn btn-secondary w-75 my-2 mx-4"
+          onclick="window.location.href='/select-tickets'">Trocar Ingressos</button>-->
+      </div>
+    </div>
+
+    <!-- Modal comprar ingresso -->
+    <div class="modal fade" id="loginComprarModal" tabindex="-1" aria-labelledby="loginComprarModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="loginComprarModalLabel">Autenticação</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="loginForm">
+              <div class="mb-3">
+                <label for="cpf-input" class="col-form-label">CPF:</label>
+                <input type="text" class="form-control" id="cpf-input" placeholder="Digite seu CPF" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success" onclick="submitLogin()">Entrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal trocar ingresso -->
+    <div class="modal fade" id="loginTrocarModal" tabindex="-1" aria-labelledby="loginTrocarModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="loginTrocarModalLabel">Autenticação</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="loginForm">
+              <div class="mb-3">
+                <label for="cpf-input" class="col-form-label">CPF:</label>
+                <input type="text" class="form-control" id="cpf-input" placeholder="Digite seu CPF" required>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-secondary" onclick="submitLogin()">Entrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+
 </html>
