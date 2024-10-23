@@ -1,4 +1,4 @@
-<!-- public/index.ejs -->
+<!-- views/index.ejs -->
 <!DOCTYPE html>
 <html>
 <%- include('partials/head', { title: 'Evento' }) %>
@@ -7,21 +7,30 @@
     <div class="container d-flex flex-column justify-content-center align-items-center" style="height: 100%;">
       <img src="#" alt="Imagem do Evento">
       <div class="row justify-content-center w-100">
-        <button type="button" class="btn btn-success w-75 my-2 mx-4" data-bs-toggle="modal" data-bs-target="#loginComprarModal">Comprar
+        <button type="button" class="btn btn-success w-75 my-2 mx-4" data-bs-toggle="modal"
+          data-bs-target="#loginComprarModal">Comprar
           Ingressos</button>
         <!--<button type="button" class="btn btn-success w-75 my-2 mx-4">
           onclick="window.location.href='/select-tickets'">Comprar Ingressos</button>-->
       </div>
       <div class="row justify-content-center w-100">
-        <button type="button" class="btn btn-secondary w-75 my-2 mx-4" data-bs-toggle="modal" data-bs-target="#loginTrocarModal">Trocar
+        <button type="button" class="btn btn-secondary w-75 my-2 mx-4" data-bs-toggle="modal"
+          data-bs-target="#loginTrocarModal">Trocar
           Ingressos</button>
+        <!--<button type="button" class="btn btn-secondary w-75 my-2 mx-4"
+          onclick="window.location.href='/select-tickets'">Trocar Ingressos</button>-->
+      </div>
+      <div class="row justify-content-center w-100">
+        <button type="button" class="btn btn-primary w-75 my-2 mx-4" data-bs-toggle="modal"
+          data-bs-target="#ContatosModal" onclick="window.open('https://wa.me/27988655236?text=Vim%20do%20site', '_blank')">Chame-nos nos WhatsApp</button>
         <!--<button type="button" class="btn btn-secondary w-75 my-2 mx-4"
           onclick="window.location.href='/select-tickets'">Trocar Ingressos</button>-->
       </div>
     </div>
 
     <!-- Modal comprar ingresso -->
-    <div class="modal fade" id="loginComprarModal" tabindex="-1" aria-labelledby="loginComprarModalLabel" aria-hidden="true">
+    <div class="modal fade" id="loginComprarModal" tabindex="-1" aria-labelledby="loginComprarModalLabel"
+      aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -32,19 +41,21 @@
             <form id="loginForm">
               <div class="mb-3">
                 <label for="cpf-input" class="col-form-label">CPF:</label>
-                <input type="text" class="form-control" id="cpf-input" placeholder="Digite seu CPF" required>
+                <input type="text" class="form-control cpf-input-comprar" id="cpf-input" placeholder="Digite seu CPF"
+                  oninput="inputformatCPF(this)" required>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-success" onclick="submitLogin()">Entrar</button>
+            <button type="submit" class="btn btn-success" onclick="authenticateUser('comprar')">Entrar</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Modal trocar ingresso -->
-    <div class="modal fade" id="loginTrocarModal" tabindex="-1" aria-labelledby="loginTrocarModalLabel" aria-hidden="true">
+    <div class="modal fade" id="loginTrocarModal" tabindex="-1" aria-labelledby="loginTrocarModalLabel"
+      aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -55,16 +66,78 @@
             <form id="loginForm">
               <div class="mb-3">
                 <label for="cpf-input" class="col-form-label">CPF:</label>
-                <input type="text" class="form-control" id="cpf-input" placeholder="Digite seu CPF" required>
+                <input type="text" class="form-control cpf-input-troca" placeholder="Digite seu CPF"
+                  oninput="inputformatCPF(this)" required>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-secondary" onclick="submitLogin()">Entrar</button>
+            <button type="submit" class="btn btn-secondary" onclick="authenticateUser('trocar')">Entrar</button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Modal entrar em contato -->
+    <div class="modal fade" id="ContatosModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+      aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            ...
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function inputformatCPF(input) {
+        let value = input.value.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
+
+        // Aplica a máscara de CPF conforme o número é digitado
+        if (value.length > 3) {
+          value = value.slice(0, 3) + '.' + value.slice(3);
+        }
+        if (value.length > 7) {
+          value = value.slice(0, 7) + '.' + value.slice(7);
+        }
+        if (value.length > 11) {
+          value = value.slice(0, 11) + '-' + value.slice(11, 13);
+        }
+
+        input.value = value; // Atualiza o campo com a formatação correta
+      }
+
+      function authenticateUser(input) {
+        const cpfInput = (input === "comprar") ? document.getElementsByClassName('cpf-input-comprar')[0].value : document.getElementsByClassName('cpf-input-troca')[0].value;
+
+        const cpfError = document.getElementById('cpfError');
+
+        // Verifica se o CPF está completo (com 14 caracteres: 11 números, 2 pontos e 1 traço)
+        if (cpfInput.length === 14) {
+          // Salva o CPF no localStorage
+          localStorage.setItem('userCPF', cpfInput);
+
+          // Redireciona para a rota de seleção de ingressos
+          if (input == "comprar") window.location.href = '/select-tickets';
+          //if(input == "trocar")
+        } else {
+          // Exibe uma mensagem de erro
+          cpfError.style.display = 'block';
+        }
+      }
+
+    </script>
   </body>
 
 </html>

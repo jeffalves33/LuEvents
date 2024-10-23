@@ -1,0 +1,126 @@
+<!-- views/tickets/select-seats.ejs -->
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<%- include('../partials/head', { title: 'Seleção de poltronas' }) %>
+
+  <body>
+    <div class="container">
+      <div id="carouselExampleCaptions" class="carousel slide">
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active"
+            aria-current="true" aria-label="Slide 1"></button>
+          <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"
+            aria-label="Slide 2"></button>
+          <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"
+            aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img src="..." class="d-block w-100" alt="...">
+            <div class="carousel-caption d-none d-md-block">
+              <h5>First slide label</h5>
+              <p>Some representative placeholder content for the first slide.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="..." class="d-block w-100" alt="...">
+            <div class="carousel-caption d-none d-md-block">
+              <h5>Second slide label</h5>
+              <p>Some representative placeholder content for the second slide.</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="..." class="d-block w-100" alt="...">
+            <div class="carousel-caption d-none d-md-block">
+              <h5>Third slide label</h5>
+              <p>Some representative placeholder content for the third slide.</p>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions"
+          data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions"
+          data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="container" id="seatsContainer">
+      <div class="alert alert-primary" role="alert">
+        <p class="text-center m-0">Verifique os andares disponíveis nas imagens acima.</p>
+      </div>
+    </div>
+
+    <!-- Mostrar os assentos selecionados -->
+    <div></div>
+
+    <!-- Botão de continuar para o cadastramento -->
+    <div class="container d-flex flex-column justify-content-center align-items-center">
+      <button type="button" class="btn btn-primary w-75 mx-4" onclick="saveQtdTickets()">Prosseguir</button>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const qtdIngressos = parseInt(localStorage.getItem("qtdIngressos")) || 0;
+        const seatsContainer = document.getElementById("seatsContainer");
+
+        for (let i = 1; i <= qtdIngressos; i++) {
+          const rowDiv = document.createElement("div");
+          rowDiv.className = "row d-flex justify-content-center mb-2";
+
+          const colNum = document.createElement("div");
+          colNum.className = "col-1 d-flex justify-content-center align-items-center";
+          colNum.innerHTML = `<p class="mb-0">${i}º</p>`;
+
+          const colAndar = document.createElement("div");
+          colAndar.className = "col-3";
+          colAndar.innerHTML = `
+            <select class="form-select" aria-label="Default select example">
+                <option selected>Andar</option>
+                <option value="A">1</option>
+                <option value="B">2</option>
+                <option value="C">3</option>
+            </select>
+        `;
+
+          const colLetra = document.createElement("div");
+          colLetra.className = "col-3";
+          colLetra.innerHTML = `
+            <select class="form-select" aria-label="Default select example">
+                <option selected>Fileira</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+        `;
+
+          const colNumero = document.createElement("div");
+          colNumero.className = "col-3";
+          colNumero.innerHTML = `
+            <select class="form-select" aria-label="Default select example">
+                <option selected>Número</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+        `;
+
+          rowDiv.appendChild(colNum);
+          rowDiv.appendChild(colAndar);
+          rowDiv.appendChild(colLetra);
+          rowDiv.appendChild(colNumero);
+
+          seatsContainer.appendChild(rowDiv);
+        }
+      });
+
+    </script>
+  </body>
+
+</html>
