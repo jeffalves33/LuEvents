@@ -1,0 +1,110 @@
+<!-- views/tickets/confirm-seats.ejs -->
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<%- include('../partials/head', { title: 'Seleção de poltronas' }) %>
+
+    <body>
+        <div class="container">
+            <div class="row mt-2">
+                <div class="col-6">
+                    <div class="mb-3">
+                        <input type="text" class="form-control cpf-input" placeholder="Digite um CPF"
+                            oninput="inputformatCPF(this)" required>
+                    </div>
+                    </form>
+                </div>
+                <div class="col-4">
+                    <button type="submit" class="btn btn-secondary" onclick="buscarUsuario()">Buscar</button>
+                </div>
+            </div>
+            <div id="assentos-container">
+                <!-- Os assentos serão exibidos aqui -->
+            </div>
+        </div>
+        <script>
+            // Função que será chamada ao carregar a página
+            window.onload = function () {
+                const minhaVariavel = localStorage.getItem('admin');
+                if (!minhaVariavel) window.location.href = '/admin';
+            }
+
+            function inputformatCPF(input) {
+                let value = input.value.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
+
+                // Aplica a máscara de CPF conforme o número é digitado
+                if (value.length > 3) {
+                    value = value.slice(0, 3) + '.' + value.slice(3);
+                }
+                if (value.length > 7) {
+                    value = value.slice(0, 7) + '.' + value.slice(7);
+                }
+                if (value.length > 11) {
+                    value = value.slice(0, 11) + '-' + value.slice(11, 13);
+                }
+
+                input.value = value; // Atualiza o campo com a formatação correta
+            }
+
+            function confirmaPagamento(idCadeira) {
+                fetch(`confirm-Payment/${idCadeira}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const elementRemove = document.getElementById(data.id);
+                        elementRemove.remove();
+                    })
+                    .catch(error => console.error('Erro ao confirmar pagamento:', error));
+            }
+
+            function negarPagamento(idCadeira) {
+                fetch(`deny-payment/${idCadeira}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const elementRemove = document.getElementById(data.id);
+                        elementRemove.remove();
+                    })
+                    .catch(error => console.error('Erro ao negar pagamento:', error));
+            }
+
+            function buscarUsuario() {
+                const cpfInput = document.getElementsByClassName('cpf-input')[0].value;
+                if (cpfInput.length === 14) {
+                    fetch(`search-seats/${cpfInput}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const assentosContainer = document.getElementById('assentos-container');
+                            assentosContainer.innerHTML = '';
+
+                            if (data.cadeiras && data.cadeiras.length > 0) {
+                                data.cadeiras.forEach(cadeira => {
+                                    const assentoInfo = `
+                                        <div class="row mb-2" id="${cadeira.id}">
+                                            <div class="col-5">
+                                                <p class="p-2 bg-light border rounded">
+                                                    Sessão ${cadeira.sessao}, Andar ${cadeira.andar}, Fileira ${cadeira.fileira}, Poltrona ${cadeira.numero}
+                                                </p>
+                                            </div>
+                                            <div class="col-1">
+                                                <button type="submit" class="btn btn-success" onclick="confirmaPagamento('${cadeira.id}')">✔️</button>
+                                            </div>
+                                            <div class="col-1">
+                                                <button type="submit" class="btn btn-danger" onclick="negarPagamento('${cadeira.id}')">❌</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                    assentosContainer.innerHTML += assentoInfo;
+                                });
+                            } else {
+                                assentosContainer.innerHTML = '<p class="text-warning">Nenhum assento encontrado.</p>';
+                            }
+                        })
+                        .catch(error => console.error('Erro ao buscar os assentos:', error));
+                } else {
+
+                }
+            }
+
+        </script>
+    </body>
+
+</html>

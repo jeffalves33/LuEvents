@@ -74,7 +74,7 @@
           <div class="modal-body"></div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-            <button type="button" class="btn btn-primary">Confirmar</button>
+            <button type="button" class="btn btn-primary" onclick="webhookPayment()">Confirmar</button>
           </div>
         </div>
       </div>
@@ -159,6 +159,15 @@
       function saveTickets() {
         const rows = document.querySelectorAll("#seatsContainer .row");
         const selectedSeats = new Set();
+        let finalText = `
+          <p><b>CPF:</b> ${localStorage.getItem('userCPF')}</p>
+          <p><b>email:</b> ${localStorage.getItem('email')}</p>
+          <p><b>telefone:</b> ${localStorage.getItem('phone')}</p>
+          <p><b>Seção:</b> ${localStorage.getItem('secao')}</p>
+          <p><b>Quantidade de assentos:</b> ${localStorage.getItem('qtdIngressos')}</p>
+          <p><b>Assentos:</b></p>
+          <ul>
+        `;
 
         for (const row of rows) {
           const selects = row.querySelectorAll("select");
@@ -188,10 +197,19 @@
         const modalBody = document.getElementsByClassName("modal-body")[0];
         const selectedSeatsArrayStylized = selectedSeatsArray.map(row => {
           [andar, fileira, numero] = row.split('-');
-          return `Andar ${andar}, Fileira ${fileira}, Poltrona ${numero}`;
+          return `<li>Andar ${andar}, Fileira ${fileira}, Poltrona ${numero}</li>`;
         })
-        modalBody.innerHTML = selectedSeatsArrayStylized.join("<br>")
+        finalText += selectedSeatsArrayStylized.join("");
+        finalText += `
+          </ul>
+          <p><b>Valor total:</b> R$${localStorage.getItem('qtdIngressos') * 50},00</p>
+        `;
+        modalBody.innerHTML = finalText;
         modal.show();
+      }
+
+      function webhookPayment() {
+        window.location.href = '/webhook';
       }
     </script>
 

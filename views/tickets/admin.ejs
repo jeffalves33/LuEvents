@@ -1,0 +1,44 @@
+<!-- views/tickets/admin.ejs -->
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<%- include('../partials/head', { title: 'Admin' }) %>
+
+    <body>
+        <div class="container d-flex align-items-center justify-content-center" style="height: 100vh;">
+            <div class="card p-4" style="width: 300px;">
+                <h3 class="text-center">Login</h3>
+                <form onsubmit="authenticate(event)">
+                    <div class="form-group">
+                        <label for="username">Usuário</label>
+                        <input type="text" id="username" class="form-control" placeholder="Usuário" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Senha</label>
+                        <input type="password" id="password" class="form-control" placeholder="Senha" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function authenticate(event) {
+                event.preventDefault(); // Impede o envio padrão do formulário
+
+                // Obtém os valores do formulário
+                const username = document.getElementById("username").value;
+                const password = document.getElementById("password").value;
+
+                // Verifica se o usuário e senha estão corretos
+                if (username === "adminLu" && password === "traquinas") {
+                    localStorage.setItem("admin", true)
+                    window.location.href = "/confirm-seats"; // Redireciona para a página de sucesso
+                } else {
+                    alert("Usuário ou senha incorretos. Tente novamente.");
+                }
+            }
+        </script>
+    </body>
+
+</html>

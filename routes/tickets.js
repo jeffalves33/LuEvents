@@ -64,9 +64,9 @@ router.get('/getCadeiras/:andar/:fileira', async (req, res) => {
 });
 
 // Dados das fileiras e números
-const fileiras = {
-    A: 44
-    /*B: 19,
+/*const fileiras = {
+    A: 44,
+    B: 19,
     C: 19,
     D: 19,
     E: 28,
@@ -75,8 +75,7 @@ const fileiras = {
     H: 29,
     I: 29,
     J: 28,
-    K: 30,
-    L: 25*/
+    K: 30
 };
 router.get('/preencher-cadeiras', async (req, res) => {
     const cadeiras = [];
@@ -88,7 +87,8 @@ router.get('/preencher-cadeiras', async (req, res) => {
                 andar: 3,
                 fileira,
                 numero,
-                disponivel: true
+                disponivel: true,
+                sessao: 2
             });
         }
     }
@@ -104,6 +104,69 @@ router.get('/preencher-cadeiras', async (req, res) => {
     }
 
     res.json({ message: 'Banco de dados preenchido com sucesso', data });
+});*/
+
+router.get('/webhook', async (req, res) => {
+    res.render('tickets/external-payment');
 });
+
+// nessa rota que vai ocorrer a mudança:
+// como o pix automático não está me retornando nada,
+// vou considerar essa rota como que o usuário já tenha pago
+// havendo um link para chamar no wpp para a confirmação
+router.get('/payment-success', async (req, res) => {
+    res.render('tickets/external-payment');
+});
+
+router.get('/payment-success', async (req, res) => {
+    res.render('tickets/external-payment');
+});
+
+router.get('/admin', async (req, res) => {
+    res.render('tickets/admin');
+});
+
+router.get('/confirm-seats', async (req, res) => {
+    res.render('tickets/confirm-seats');
+});
+
+router.get('/search-seats/:cpf', async (req, res) => {
+    const { cpf } = req.params;
+    const { data, error } = await supabase
+        .from('Users')
+        .select('id')
+        .eq('cpf', cpf);
+    if (error) return res.status(500).json({ error: error.message });
+    if (data.length == 0) return res.status(500).json({ error: "CPF não encontrado" });
+    const idUser = data[0].id;
+    const { data: lugares, error: errorLugares } = await supabase
+        .from('Cadeiras')
+        .select('*')
+        .eq('user', idUser)
+        .eq('payment', 'P');
+    if (error) return res.status(500).json({ error: errorLugares.message });
+    res.json({ cadeiras: lugares });
+});
+
+router.get('/confirm-Payment/:idCadeira', async (req, res) => {
+    const { idCadeira } = req.params;
+    const { data, error } = await supabase
+        .from('Cadeiras')
+        .update({ payment: 'S' })
+        .eq('id', idCadeira);
+    if (error) return res.status(500).json({ message: 'Erro ao atualizar a linha', error });
+    return res.status(200).json({ message: 'Pagamento confirmado', id: idCadeira });
+});
+
+router.get('/deny-payment/:idCadeira', async (req, res) => {
+    const { idCadeira } = req.params;
+    const { data, error } = await supabase
+        .from('Cadeiras')
+        .update({ disponivel: true, payment: 'F', user: null})
+        .eq('id', idCadeira);
+    if (error) return res.status(500).json({ message: 'Erro ao atualizar a linha', error });
+    return res.status(200).json({ message: 'Pagamento negado', id: idCadeira });
+});
+
 
 module.exports = router;
