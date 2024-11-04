@@ -21,24 +21,28 @@ router.get('/change-seats', (req, res) => {
     res.render('tickets/change-seats');
 });
 
-router.get('/getAndares', async (req, res) => {
+router.get('/getAndares/:sessao', async (req, res) => {
+    const { sessao } = req.params;
     const { data, error } = await supabase
         .from('Cadeiras')
         .select('andar', { distinct: true })
         .is('disponivel', true)
+        .eq('sessao', sessao)
         .order('andar', { ascending: true });
 
     if (error) return res.status(500).json({ error: error.message });
     const uniqueAndares = [...new Set(data.map((item) => item.andar))];
+    
     res.json({ andares: uniqueAndares });
 });
 
 // Rota para obter as fileiras disponíveis para um andar específico
-router.get('/getFileiras/:andar', async (req, res) => {
-    const { andar } = req.params;
+router.get('/getFileiras/:sessao/:andar', async (req, res) => {
+    const { sessao, andar } = req.params;
     const { data, error } = await supabase
         .from('Cadeiras')
         .select('fileira')
+        .eq('sessao', sessao)
         .eq('andar', andar)
         .is('disponivel', true)
         .order('fileira', { ascending: true });
@@ -49,11 +53,12 @@ router.get('/getFileiras/:andar', async (req, res) => {
 });
 
 // Rota para obter as cadeiras disponíveis em um andar e fileira específicos
-router.get('/getCadeiras/:andar/:fileira', async (req, res) => {
-    const { andar, fileira } = req.params;
+router.get('/getCadeiras/:sessao/:andar/:fileira', async (req, res) => {
+    const { sessao, andar, fileira } = req.params;
     const { data, error } = await supabase
         .from('Cadeiras')
         .select('numero')
+        .eq('sessao', sessao)
         .eq('andar', andar)
         .eq('fileira', fileira)
         .is('disponivel', true)
