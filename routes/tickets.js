@@ -68,65 +68,6 @@ router.get('/getCadeiras/:sessao/:andar/:fileira', async (req, res) => {
     res.json({ cadeiras: data.map((item) => item.numero) });
 });
 
-// Dados das fileiras e números
-/*const fileiras = {
-    A: 44,
-    B: 19,
-    C: 19,
-    D: 19,
-    E: 28,
-    F: 28,
-    G: 28,
-    H: 29,
-    I: 29,
-    J: 28,
-    K: 30
-};
-router.get('/preencher-cadeiras', async (req, res) => {
-    const cadeiras = [];
-
-    // Gerar as cadeiras
-    for (const [fileira, numeroDePoltronas] of Object.entries(fileiras)) {
-        for (let numero = 1; numero <= numeroDePoltronas; numero++) {
-            cadeiras.push({
-                andar: 3,
-                fileira,
-                numero,
-                disponivel: true,
-                sessao: 2
-            });
-        }
-    }
-
-    // Inserir as cadeiras no Supabase
-    const { data, error } = await supabase
-        .from('Cadeiras')
-        .insert(cadeiras);
-
-    if (error) {
-        console.error('Erro ao inserir cadeiras:', error);
-        return res.status(500).json({ error: 'Erro ao preencher o banco de dados' });
-    }
-
-    res.json({ message: 'Banco de dados preenchido com sucesso', data });
-});*/
-
-router.get('/webhook', async (req, res) => {
-    res.render('tickets/external-payment');
-});
-
-// nessa rota que vai ocorrer a mudança:
-// como o pix automático não está me retornando nada,
-// vou considerar essa rota como que o usuário já tenha pago
-// havendo um link para chamar no wpp para a confirmação
-router.get('/payment-success', async (req, res) => {
-    res.render('tickets/external-payment');
-});
-
-router.get('/payment-success', async (req, res) => {
-    res.render('tickets/external-payment');
-});
-
 router.get('/admin', async (req, res) => {
     res.render('tickets/admin');
 });

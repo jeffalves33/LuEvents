@@ -62,7 +62,7 @@
           <div class="modal-body"></div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-            <button type="button" class="btn btn-primary" onclick="webhookPayment()">Confirmar</button>
+            <button type="button" class="btn btn-primary" onclick="whatsAppPayment()">Confirmar</button>
           </div>
         </div>
       </div>
@@ -82,6 +82,7 @@
         document.addEventListener("DOMContentLoaded", function () {
           const qtdIngressos = parseInt(localStorage.getItem("qtdIngressos")) || 0;
           const seatsContainer = document.getElementById("seatsContainer");
+          const sessao = localStorage.getItem('sessao');
 
           for (let i = 1; i <= qtdIngressos; i++) {
             const rowDiv = document.createElement("div");
@@ -119,7 +120,7 @@
             seatsContainer.appendChild(rowDiv);
 
             // Carregar os andares
-            fetch(`/getAndares/${localStorage.getItem('sessao')}`)
+            fetch(`/getAndares/${sessao}`)
               .then(response => response.json())
               .then(data => {
                 data.andares.forEach(andar => {
@@ -131,7 +132,7 @@
             andarSelect.addEventListener('change', function () {
               fileiraSelect.innerHTML = `<option selected>Fileira</option>`;
               cadeiraSelect.innerHTML = `<option selected>Número</option>`;
-              fetch(`/getFileiras/${localStorage.getItem('sessao')}/${andarSelect.value}`)
+              fetch(`/getFileiras/${sessao}/${andarSelect.value}`)
                 .then(response => response.json())
                 .then(data => {
                   data.fileiras.forEach(fileira => {
@@ -143,7 +144,7 @@
             // Atualizar cadeiras com base na fileira selecionada
             fileiraSelect.addEventListener('change', function () {
               cadeiraSelect.innerHTML = `<option selected>Número</option>`;
-              fetch(`getCadeiras/${localStorage.getItem('sessao')}/${andarSelect.value}/${fileiraSelect.value}`)
+              fetch(`getCadeiras/${sessao}/${andarSelect.value}/${fileiraSelect.value}`)
                 .then(response => response.json())
                 .then(data => {
                   data.cadeiras.forEach(cadeira => {
@@ -158,14 +159,14 @@
           const rows = document.querySelectorAll("#seatsContainer .row");
           const selectedSeats = new Set();
           let finalText = `
-          <p><b>CPF:</b> ${localStorage.getItem('userCPF')}</p>
-          <p><b>email:</b> ${localStorage.getItem('email')}</p>
-          <p><b>telefone:</b> ${localStorage.getItem('phone')}</p>
-          <p><b>Sessão:</b> ${localStorage.getItem('sessao')}</p>
-          <p><b>Quantidade de assentos:</b> ${localStorage.getItem('qtdIngressos')}</p>
-          <p><b>Assentos:</b></p>
-          <ul>
-        `;
+            <p><b>CPF:</b> ${localStorage.getItem('userCPF')}</p>
+            <p><b>email:</b> ${localStorage.getItem('userEmail')}</p>
+            <p><b>telefone:</b> ${localStorage.getItem('userPhone')}</p>
+            <p><b>Sessão:</b> ${localStorage.getItem('sessao')}</p>
+            <p><b>Quantidade de assentos:</b> ${localStorage.getItem('qtdIngressos')}</p>
+            <p><b>Assentos:</b></p>
+            <ul>
+          `;
 
           for (const row of rows) {
             const selects = row.querySelectorAll("select");
@@ -200,14 +201,34 @@
           finalText += selectedSeatsArrayStylized.join("");
           finalText += `
           </ul>
-          <p><b>Valor total:</b> R$${localStorage.getItem('qtdIngressos') * 50},00</p>
+          <p><b>Valor total:</b> R$${localStorage.getItem('qtdIngressos') * 67},00</p>
         `;
           modalBody.innerHTML = finalText;
           modal.show();
         }
 
-        function webhookPayment() {
-          window.location.href = '/webhook';
+        function whatsAppPayment() {
+          // Captura os dados do localStorage
+          const cpf = localStorage.getItem('userCPF');
+          const email = localStorage.getItem('userEmail');
+          const telefone = localStorage.getItem('userPhone');
+          const sessao = localStorage.getItem('sessao');
+          const quantidadeAssentos = localStorage.getItem('qtdIngressos');
+          const selectedSeats = localStorage.getItem("selectedSeats");
+          const selectedSeatsArray = selectedSeats.split(',').map(seat => seat.trim());
+          const formattedSeats = selectedSeatsArray.map(seat => {
+            const [andar, fileira, numero] = seat.split('-');
+            return `Andar ${andar}, Fileira ${fileira}, Poltrona ${numero}`;
+          }).join(' | ');
+          const valorTotal = `R$${quantidadeAssentos * 67},00`;
+          const message = `
+            *Resumo do Pedido:*\n*CPF:* ${cpf}\n*Email:* ${email}\n*Telefone:* ${telefone}\n*Sessão:* ${sessao}\n*Quantidade de assentos:* ${quantidadeAssentos}\n*Assentos:* ${formattedSeats}\n*Valor total:* ${valorTotal}
+          `;
+          const encodedMessage = encodeURIComponent(message);
+          console.log(encodedMessage)
+          const whatsappNumber = "5527988655236";
+          const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+          window.location.href = whatsappUrl;
         }
 
         function expandImage(imgElement) {
