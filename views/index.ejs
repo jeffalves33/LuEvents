@@ -10,13 +10,13 @@
         <button type="button" class="btn btn-success w-75 my-2 mx-4" data-bs-toggle="modal"
           data-bs-target="#loginComprarModal">Comprar Ingressos</button>
       </div>
-      <div class="row justify-content-center w-100">
+      <!--<div class="row justify-content-center w-100">
         <button type="button" class="btn btn-secondary w-75 my-2 mx-4" data-bs-toggle="modal"
           data-bs-target="#loginTrocarModal">Trocar Ingressos</button>
-      </div>
+      </div>-->
       <div class="row justify-content-center w-100">
         <button type="button" class="btn btn-secondary w-75 my-2 mx-4" data-bs-toggle="modal"
-          onclick="window.open('https://wa.me/27988655236?text=Vim%20do%20site', '_blank')">
+          onclick="window.open('https://wa.me/557399435704?text=Vim%20do%20site', '_blank')">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp"
             viewBox="0 0 16 16">
             <path
@@ -82,20 +82,11 @@
       });
 
       function inputformatCPF(input) {
-        let value = input.value.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
-
-        // Aplica a máscara de CPF conforme o número é digitado
-        if (value.length > 3) {
-          value = value.slice(0, 3) + '.' + value.slice(3);
-        }
-        if (value.length > 7) {
-          value = value.slice(0, 7) + '.' + value.slice(7);
-        }
-        if (value.length > 11) {
-          value = value.slice(0, 11) + '-' + value.slice(11, 13);
-        }
-
-        input.value = value; // Atualiza o campo com a formatação correta
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 3) value = value.slice(0, 3) + '.' + value.slice(3);
+        if (value.length > 7) value = value.slice(0, 7) + '.' + value.slice(7);
+        if (value.length > 11) value = value.slice(0, 11) + '-' + value.slice(11, 13);
+        input.value = value;
       }
 
       function authenticateUser(input) {

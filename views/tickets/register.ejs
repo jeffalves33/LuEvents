@@ -1,4 +1,4 @@
-<!-- views/tickets/login.ejs -->
+<!-- views/tickets/register.ejs -->
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -16,7 +16,7 @@
                     <div class="form-group">
                         <label for="username">CPF</label>
                         <input type="text" id="userCPF" class="form-control" placeholder="CPF"
-                            oninput="inputformatCPF(this)" required>
+                            oninput="inputformatCPF(this)" disabled required>
                     </div>
                     <div class="form-group">
                         <label for="username">email</label>
@@ -26,7 +26,7 @@
                     <div class="form-group">
                         <label for="username">telefone</label>
                         <input type="text" id="userPhone" class="form-control" placeholder="Phone"
-                            oninput="inputformatPhoneNumber(this)" required>
+                            oninput="inputformatPhoneNumber(this)" disabled>
                     </div>
                     <div class="form-group">
                         <label for="password">Senha</label>
@@ -39,31 +39,19 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
-                // Recupera o valor do LocalStorage (substitua 'meuValor' pela chave desejada)
-                const userCPF = localStorage.getItem('userCPF');
-
-                // Se existir um valor salvo, define-o como o valor do input
-                if (userCPF) {
-                    document.getElementById("userCPF").value = userCPF;
-                }
-            });
-
-
-            document.addEventListener("DOMContentLoaded", function () {
                 const userCPF = localStorage.getItem('userCPF');
                 if (userCPF) document.getElementById("userCPF").value = userCPF;
             });
 
-            function validateForm(event) {
+            async function validateForm(event) {
                 event.preventDefault();
-
                 const userName = document.getElementById("userName").value;
                 const userCPF = document.getElementById("userCPF").value;
                 const userEmail = document.getElementById("userEmail").value;
                 const userPhone = document.getElementById("userPhone").value;
                 const password = document.getElementById("password").value;
 
-                if (!userName || !userCPF || !userEmail || !userPhone || !password) {
+                if (!userName || !userCPF || !userEmail /*|| !userPhone*/ || !password) {
                     alert("Por favor, preencha todos os campos.");
                     return;
                 }
@@ -71,53 +59,42 @@
                 if (userCPF.replace(/\D/g, '').length !== 11) {
                     alert("CPF inválido. Certifique-se de que contém 11 dígitos.");
                     return;
-                } else {
-                    fetch(`search-user-cpf/${userCPF}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.user != null) {
-                                alert("CPF já cadastrado. Volte para o login ou revise o CPF.");
-                                return;
-                            }
-                        })
+                }
+                const cpfResponse = await fetch(`search-user-cpf/${userCPF}`);
+                const cpfData = await cpfResponse.json();
+                if (cpfData.user != null) {
+                    alert("CPF já cadastrado. Volte para o login ou revise o CPF.");
+                    return;
                 }
 
                 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailPattern.test(userEmail)) {
                     alert("E-mail inválido.");
                     return;
-                } else {
-                    fetch(`search-user-email/${userEmail}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.user != null) {
-                                alert("email já cadastrado. Volte para o login ou revise o email.");
-                                return;
-                            }
-                        })
+                }
+                const emailResponse = await fetch(`search-user-email/${userEmail}`);
+                const emailData = await emailResponse.json();
+                if (emailData.user != null) {
+                    alert("E-mail já cadastrado. Volte para o login ou revise o e-mail.");
+                    return;
                 }
 
-                const userPhoneDecod = userPhone.replace(/\D/g, '');
+                /*const userPhoneDecod = userPhone.replace(/\D/g, '');
                 if (userPhoneDecod.length !== 11) {
                     alert("Telefone inválido. Certifique-se de que contém 11 dígitos, incluindo o DDD.");
                     return;
-                } else {
-                    fetch(`search-user-phone/${userPhoneDecod}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.user != null) {
-                                alert("Telefone já cadastrado. Volte para o login ou revise o telefone.");
-                                return;
-                            }
-                        })
                 }
+                const phoneResponse = await fetch(`search-user-phone/${userPhoneDecod}`);
+                const phoneData = await phoneResponse.json();
+                if (phoneData.user != null) {
+                    alert("Telefone já cadastrado. Volte para o login ou revise o telefone.");
+                    return;
+                }*/
 
-                authenticate(event, userName, userCPF, userEmail, userPhoneDecod, password);
+                authenticate(event, userName, userCPF, userEmail, userPhoneDecod = null, password);
             }
 
             function authenticate(event, userName, userCPF, userEmail, userPhoneDecod, password) {
-                event.preventDefault();
-
                 fetch('/authenticate', {
                     method: 'POST',
                     headers: {
@@ -131,9 +108,9 @@
                             localStorage.setItem("userEmail", userEmail);
                             localStorage.setItem("userName", userName);
                             localStorage.setItem("userPhone", userPhoneDecod);
+                            localStorage.setItem("userId", data.user.id);
                             window.location.href = "/select-tickets";
-                        }
-                        else alert(data.message);
+                        } else alert(data.message);
                     })
                     .catch(error => console.error('Erro de autenticação:', error));
             }
@@ -149,26 +126,16 @@
             function validateEmail(input) {
                 const email = input.value;
                 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
                 if (emailPattern.test(email)) input.style.borderColor = 'green';
                 else input.style.borderColor = 'red';
             }
 
             function inputformatCPF(input) {
-                let value = input.value.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
-
-                // Aplica a máscara de CPF conforme o número é digitado
-                if (value.length > 3) {
-                    value = value.slice(0, 3) + '.' + value.slice(3);
-                }
-                if (value.length > 7) {
-                    value = value.slice(0, 7) + '.' + value.slice(7);
-                }
-                if (value.length > 11) {
-                    value = value.slice(0, 11) + '-' + value.slice(11, 13);
-                }
-
-                input.value = value; // Atualiza o campo com a formatação correta
+                let value = input.value.replace(/\D/g, '');
+                if (value.length > 3) value = value.slice(0, 3) + '.' + value.slice(3);
+                if (value.length > 7) value = value.slice(0, 7) + '.' + value.slice(7);
+                if (value.length > 11) value = value.slice(0, 11) + '-' + value.slice(11, 13);
+                input.value = value;
             }
         </script>
     </body>

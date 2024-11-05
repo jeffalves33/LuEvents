@@ -68,6 +68,45 @@ router.get('/getCadeiras/:sessao/:andar/:fileira', async (req, res) => {
     res.json({ cadeiras: data.map((item) => item.numero) });
 });
 
+router.get('/checkAssentosDisponiveis/:sessao', async (req, res) => {
+    const { sessao } = req.params;
+    const { assentos } = req.query;
+    const assentosArray = JSON.parse(assentos);
+    const numerosAssentos = assentosArray.map(assento => assento.numero);
+    const letrasFileiras = assentosArray.map(assento => assento.fileira);
+    const numerosAndares = assentosArray.map(assento => assento.andar)
+
+    const { data, error } = await supabase
+        .from('Cadeiras')
+        .select('sessao, andar, fileira, numero')
+        .eq('sessao', sessao)
+        .is('disponivel', true)
+        .in('numero', numerosAssentos)
+        .in('fileira', letrasFileiras)
+        .in('andar', numerosAndares)
+
+    if (error) return res.status(500).json({ error: error.message });
+    const assentosDisponiveis = data.map(({ andar, fileira, numero }) => `${andar}-${fileira}-${numero}`);
+    
+    if (assentosArray.every(assento => assentosDisponiveis.includes(`${assento.andar}-${assento.fileira}-${assento.numero}`))) res.json({ disponivel: true });
+    else res.json({ disponivel: false, assentosDisponiveis });
+});
+
+router.post('/getAssento/:sessao/:andar/:fileira/:numero/:userId', async (req, res) => {
+    const { sessao, andar, fileira, numero, userId } = req.params;
+    const { data, error } = await supabase
+        .from('Cadeiras')
+        .update({ disponivel: false, payment: 'P', user: userId })
+        .eq('sessao', sessao)
+        .eq('andar', andar)
+        .eq('fileira', fileira)
+        .eq('numero', numero)
+        .is('disponivel', true)
+        .select();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ cadeira: data });
+});
+
 router.get('/admin', async (req, res) => {
     res.render('tickets/admin');
 });
@@ -87,7 +126,7 @@ router.get('/search-seats/:cpf', async (req, res) => {
     const idUser = data[0].id;
     const { data: lugares, error: errorLugares } = await supabase
         .from('Cadeiras')
-        .select('*')
+        .select()
         .eq('user', idUser)
         .eq('payment', 'P');
     if (error) return res.status(500).json({ error: errorLugares.message });
@@ -175,7 +214,7 @@ router.post('/authenticate', async (req, res) => {
         .insert({ nome: userName, cpf: userCPF, email: userEmail, phone: userPhoneDecod, senha: password })
         .select()
     if (error) return res.status(500).json({ message: 'Erro ao criar usuário', success: false });
-    return res.status(200).json({ message: 'Usuário criado', success: true });
+    return res.status(200).json({ message: 'Usuário criado', success: true, user: data[0] });
 });
 
 module.exports = router;

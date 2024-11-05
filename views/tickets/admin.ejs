@@ -24,16 +24,14 @@
 
         <script>
             function authenticate(event) {
-                event.preventDefault(); // Impede o envio padrão do formulário
+                event.preventDefault();
 
-                // Obtém os valores do formulário
                 const username = document.getElementById("username").value;
                 const password = document.getElementById("password").value;
 
-                // Verifica se o usuário e senha estão corretos
                 if (username === "adminLu" && password === "traquinas") {
                     localStorage.setItem("admin", true)
-                    window.location.href = "/confirm-seats"; // Redireciona para a página de sucesso
+                    window.location.href = "/confirm-seats";
                 } else {
                     alert("Usuário ou senha incorretos. Tente novamente.");
                 }

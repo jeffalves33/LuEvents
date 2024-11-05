@@ -158,11 +158,12 @@
         function saveTickets() {
           const rows = document.querySelectorAll("#seatsContainer .row");
           const selectedSeats = new Set();
+          const sessaoDate = (localStorage.getItem('sessao') == 1 ? "16:00" : "19:30") + ", 15 de dezembro";
           let finalText = `
             <p><b>CPF:</b> ${localStorage.getItem('userCPF')}</p>
             <p><b>email:</b> ${localStorage.getItem('userEmail')}</p>
             <p><b>telefone:</b> ${localStorage.getItem('userPhone')}</p>
-            <p><b>Sessão:</b> ${localStorage.getItem('sessao')}</p>
+            <p><b>Sessão:</b> ${sessaoDate}</p>
             <p><b>Quantidade de assentos:</b> ${localStorage.getItem('qtdIngressos')}</p>
             <p><b>Assentos:</b></p>
             <ul>
@@ -207,28 +208,60 @@
           modal.show();
         }
 
-        function whatsAppPayment() {
-          // Captura os dados do localStorage
+        async function whatsAppPayment() {
           const cpf = localStorage.getItem('userCPF');
           const email = localStorage.getItem('userEmail');
           const telefone = localStorage.getItem('userPhone');
           const sessao = localStorage.getItem('sessao');
+          const sessaoDate = (sessao == 1 ? "16:00" : "19:30") + ", 15 de dezembro";
+          const userId = localStorage.getItem('userId');
           const quantidadeAssentos = localStorage.getItem('qtdIngressos');
           const selectedSeats = localStorage.getItem("selectedSeats");
           const selectedSeatsArray = selectedSeats.split(',').map(seat => seat.trim());
+
           const formattedSeats = selectedSeatsArray.map(seat => {
             const [andar, fileira, numero] = seat.split('-');
             return `Andar ${andar}, Fileira ${fileira}, Poltrona ${numero}`;
           }).join(' | ');
+
           const valorTotal = `R$${quantidadeAssentos * 67},00`;
+
+          // Monta a mensagem para WhatsApp
           const message = `
-            *Resumo do Pedido:*\n*CPF:* ${cpf}\n*Email:* ${email}\n*Telefone:* ${telefone}\n*Sessão:* ${sessao}\n*Quantidade de assentos:* ${quantidadeAssentos}\n*Assentos:* ${formattedSeats}\n*Valor total:* ${valorTotal}
+            *Resumo do Pedido:*\n*CPF:* ${cpf}\n*Email:* ${email}\n*Telefone:* ${telefone}\n*Sessão:* ${sessaoDate}\n*Quantidade de assentos:* ${quantidadeAssentos}\n*Assentos:* ${formattedSeats}\n*Valor total:* ${valorTotal}
           `;
           const encodedMessage = encodeURIComponent(message);
-          console.log(encodedMessage)
-          const whatsappNumber = "5527988655236";
+          const whatsappNumber = "557399435704";
           const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-          window.location.href = whatsappUrl;
+
+          // Preparar a lista de assentos para verificação e reserva
+          const assentos = selectedSeatsArray.map(seat => {
+            const [andar, fileira, numero] = seat.split('-');
+            return { andar, fileira, numero };
+          });
+
+          const response = await fetch(`/checkAssentosDisponiveis/${sessao}?assentos=${JSON.stringify(assentos)}`);
+          const { disponivel, assentosDisponiveis } = await response.json();
+
+          if (!disponivel) {
+            console.error("Alguns assentos já foram reservados:", assentosDisponiveis);
+            alert("Alguns dos assentos selecionados já estão reservados. Por favor, escolha outros assentos.");
+            return;
+          }
+
+          try {
+            const reservationPromises = assentos.map(({ andar, fileira, numero }) =>
+              fetch(`/getAssento/${sessao}/${andar}/${fileira}/${numero}/${userId}`, { method: 'POST' })
+                .then(response => response.json())
+            );
+
+            const reservationResults = await Promise.all(reservationPromises);
+            window.location.href = whatsappUrl;
+
+          } catch (error) {
+            console.error("Erro na reserva de assentos:", error);
+            alert("Houve um problema ao reservar os assentos. Por favor, tente novamente.");
+          }
         }
 
         function expandImage(imgElement) {
