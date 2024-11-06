@@ -148,6 +148,15 @@ router.get('/search-seats-pending/:cpf', async (req, res) => {
     res.json({ cadeiras: lugares });
 });
 
+router.get('/search-seats-pending-general', async (req, res) => {
+    const { data, error } = await supabase
+        .from('Cadeiras')
+        .select()
+        .eq('payment', 'P');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ cadeiras: data });
+});
+
 router.get('/search-seats-paid/:cpf', async (req, res) => {
     const { cpf } = req.params;
     const { data, error } = await supabase
