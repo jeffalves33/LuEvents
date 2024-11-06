@@ -5,10 +5,27 @@ const router = express.Router();
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-// Create a single supabase client for interacting with your database
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 
-// Rota para selecionar ingressos
+router.get('/dashboard', async (req, res) => {
+    let paymentSuccess, paymentPedding;
+    const { data: dataSuccess, error: errorSuccess, count: countSuccess } = await supabase
+        .from('Cadeiras')
+        .select('payment', { count: 'exact' })
+        .eq('payment', 'S');
+    if (errorSuccess) return res.status(500).json({ error: errorSuccess.message });
+    paymentSuccess = countSuccess;
+
+    const { data: dataPedding, error: errorPedding, count: countPedding } = await supabase
+        .from('Cadeiras')
+        .select('payment', { count: 'exact' })
+        .eq('payment', 'P');
+    if (errorPedding) return res.status(500).json({ error: errorPedding.message });
+    paymentPedding = countPedding;
+
+    res.json({ paymentSuccess: paymentSuccess, paymentPedding: paymentPedding });
+});
+
 router.get('/select-tickets', (req, res) => {
     res.render('tickets/select-tickets');
 });
@@ -36,7 +53,6 @@ router.get('/getAndares/:sessao', async (req, res) => {
     res.json({ andares: uniqueAndares });
 });
 
-// Rota para obter as fileiras disponíveis para um andar específico
 router.get('/getFileiras/:sessao/:andar', async (req, res) => {
     const { sessao, andar } = req.params;
     const { data, error } = await supabase
@@ -52,7 +68,6 @@ router.get('/getFileiras/:sessao/:andar', async (req, res) => {
     res.json({ fileiras: uniqueFileiras });
 });
 
-// Rota para obter as cadeiras disponíveis em um andar e fileira específicos
 router.get('/getCadeiras/:sessao/:andar/:fileira', async (req, res) => {
     const { sessao, andar, fileira } = req.params;
     const { data, error } = await supabase
@@ -115,7 +130,7 @@ router.get('/confirm-seats', async (req, res) => {
     res.render('tickets/confirm-seats');
 });
 
-router.get('/search-seats/:cpf', async (req, res) => {
+router.get('/search-seats-pending/:cpf', async (req, res) => {
     const { cpf } = req.params;
     const { data, error } = await supabase
         .from('Users')
@@ -129,6 +144,24 @@ router.get('/search-seats/:cpf', async (req, res) => {
         .select()
         .eq('user', idUser)
         .eq('payment', 'P');
+    if (error) return res.status(500).json({ error: errorLugares.message });
+    res.json({ cadeiras: lugares });
+});
+
+router.get('/search-seats-paid/:cpf', async (req, res) => {
+    const { cpf } = req.params;
+    const { data, error } = await supabase
+        .from('Users')
+        .select('id')
+        .eq('cpf', cpf);
+    if (error) return res.status(500).json({ error: error.message });
+    if (data.length == 0) return res.status(500).json({ error: "CPF não encontrado" });
+    const idUser = data[0].id;
+    const { data: lugares, error: errorLugares } = await supabase
+        .from('Cadeiras')
+        .select()
+        .eq('user', idUser)
+        .eq('payment', 'S');
     if (error) return res.status(500).json({ error: errorLugares.message });
     res.json({ cadeiras: lugares });
 });
