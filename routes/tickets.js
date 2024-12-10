@@ -207,8 +207,15 @@ router.get('/search-seats-paid/:cpf', async (req, res) => {
 router.get('/download-tickets/:idCadeira', async (req, res) => {
     const { idCadeira } = req.params;
 
+    console.log(`[INFO] Iniciando geração do ticket para idCadeira: ${idCadeira}`);
+
     async function generateQRCode(data) {
-        return await QRCode.toBuffer(JSON.stringify(data));
+        try {
+            return await QRCode.toBuffer(JSON.stringify(data));
+        } catch (err) {
+            console.error('[ERROR] Erro ao gerar QR Code:', err);
+            throw err;
+        }
     }
 
     function measureTextWidth(text, font) {
@@ -221,59 +228,84 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
     async function createEventTicket(user) {
         try {
             const sessao = user.sessao == 1 ? 'sessao1.png' : 'sessao2.png';
+            console.log(`[INFO] Selecionando imagem da sessão: ${sessao}`);
             const image = await Jimp.read(path.join(__dirname, '..', 'public', 'images', sessao));
 
             const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+            console.log('[INFO] Fonte carregada com sucesso.');
+
             const text1 = `${user.nome} | ${user.cpf}`;
             const text2 = `Sessão: ${user.sessao}, Andar: ${user.andar}, Fileira: ${user.fileira}, Poltrona: ${user.numero}`;
 
-            const textWidth1 = measureTextWidth(text1, '32px Arial');
-            const textWidth2 = measureTextWidth(text2, '32px Arial');
+            const textWidth1 = measureTextWidth(text1, "32px Arial");
+            const textWidth2 = measureTextWidth(text2, "32px Arial");
             const centerX = image.bitmap.width / 2;
 
-            image.print(font, centerX - textWidth1 / 2, 590, text1);
-            image.print(font, centerX - textWidth2 / 2, 625, text2);
+            image.print(font, centerX - (textWidth1 / 2), 590, text1);
+            image.print(font, centerX - (textWidth2 / 2), 625, text2);
 
             const qrCode = await generateQRCode(user);
             const qrImage = await Jimp.read(qrCode);
             qrImage.resize(300, 300);
             image.composite(qrImage, 210, 700);
 
+            console.log('[INFO] QR Code adicionado ao ticket.');
+
             return new Promise((resolve, reject) => {
                 image.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
                     if (err) {
+                        console.error('[ERROR] Erro ao converter imagem em buffer:', err);
                         reject(err);
                     } else {
+                        console.log('[INFO] Ticket gerado com sucesso.');
                         resolve(buffer);
                     }
                 });
             });
+
         } catch (err) {
-            console.error('Erro ao criar o ticket:', err);
+            console.error('[ERROR] Erro ao criar o ticket:', err);
             throw err;
         }
     }
 
-    const { data: cadeiraSearch, error: erroCadeiraSearch } = await supabase
-        .from('Cadeiras')
-        .select()
-        .eq('id', idCadeira);
-
-    if (erroCadeiraSearch) {
-        return res.status(500).json({ message: 'Erro buscar cadeira', erroCadeiraSearch });
-    }
-
-    const { data: user, error: erroUser } = await supabase
-        .from('Users')
-        .select()
-        .eq('id', cadeiraSearch[0].user);
-
-    if (erroUser) {
-        return res.status(500).json({ message: 'Erro ao buscar usuário', erroUser });
-    }
-
     try {
-        if (!cadeiraSearch[0].qrcode_content) {
+        const { data: cadeiraSearch, error: erroCadeiraSearch } = await supabase
+            .from('Cadeiras')
+            .select()
+            .eq('id', idCadeira);
+
+        if (erroCadeiraSearch) {
+            console.error('[ERROR] Erro ao buscar cadeira no Supabase:', erroCadeiraSearch);
+            return res.status(500).json({ message: 'Erro ao buscar cadeira', erro: erroCadeiraSearch });
+        }
+
+        if (!cadeiraSearch || cadeiraSearch.length === 0) {
+            console.error('[ERROR] Cadeira não encontrada.');
+            return res.status(404).json({ message: 'Cadeira não encontrada.' });
+        }
+
+        console.log(`[INFO] Cadeira encontrada: ${JSON.stringify(cadeiraSearch[0])}`);
+
+        const { data: user, error: erroUser } = await supabase
+            .from('Users')
+            .select()
+            .eq('id', cadeiraSearch[0].user);
+
+        if (erroUser) {
+            console.error('[ERROR] Erro ao buscar usuário no Supabase:', erroUser);
+            return res.status(500).json({ message: 'Erro ao buscar usuário', erro: erroUser });
+        }
+
+        if (!user || user.length === 0) {
+            console.error('[ERROR] Usuário não encontrado.');
+            return res.status(404).json({ message: 'Usuário não encontrado.' });
+        }
+
+        console.log(`[INFO] Usuário encontrado: ${JSON.stringify(user[0])}`);
+
+        if (!cadeiraSearch[0].qrcode_content || cadeiraSearch[0].qrcode_content == null) {
+            console.error('[ERROR] qrcode_content está vazio ou nulo.');
             return res.status(500).json({ message: 'qrcode_content é nulo' });
         }
 
@@ -283,14 +315,21 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
             nome: user[0].nome,
         };
 
+        console.log(`[INFO] Dados para geração do ticket: ${JSON.stringify(userJson)}`);
+
         const ticketBuffer = await createEventTicket(userJson);
+
         res.set('Content-Type', 'image/png');
-        res.set('Content-Disposition', `attachment; filename=ingresso_${user[0].nome}_cadeira${cadeiraSearch[0].numero}.png`);
-        res.send(ticketBuffer);
+        res.set('Content-Disposition', `attachment; filename=ticket_${idCadeira}.png`);
+        console.log('[INFO] Enviando ticket para o cliente.');
+        return res.send(ticketBuffer);
+
     } catch (err) {
+        console.error('[ERROR] Erro inesperado na geração do ticket:', err);
         return res.status(500).json({ message: 'Erro ao gerar o ticket', error: err.message });
     }
 });
+
 
 
 router.get('/confirm-Payment/:idCadeira', async (req, res) => {

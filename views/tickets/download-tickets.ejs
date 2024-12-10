@@ -54,24 +54,30 @@
     };
 
     function downloadTicket(idCadeira) {
+        console.log(`[INFO] Solicitando download do ticket para idCadeira: ${idCadeira}`);
+
         fetch(`/download-tickets/${idCadeira}`)
             .then(response => {
-                if (response.ok) {
-                    return response.blob();
-                } else {
+                if (!response.ok) {
+                    console.error(`[ERROR] Erro ao baixar o ticket. Status: ${response.status}`);
                     throw new Error('Erro ao baixar o ticket.');
                 }
+                return response.blob();
             })
             .then(blob => {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `ingresso.png`;
+                a.download = `ticket_${idCadeira}.png`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
+                console.log('[INFO] Ticket baixado com sucesso.');
             })
-            .catch(error => console.error('Erro ao baixar o ticket:', error));
+            .catch(error => {
+                console.error('[ERROR] Erro ao baixar o ticket:', error);
+            });
     }
+
 </script>
