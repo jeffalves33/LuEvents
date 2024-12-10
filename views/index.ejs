@@ -100,7 +100,7 @@
             .then(data => {
               localStorage.setItem('userCPF', cpfInput);
               if (data.user !== null) {
-                localStorage.setItem("ingresso", "baixar")
+                if(input == "baixar") localStorage.setItem("ingresso", "baixar");
                 const modalBodyLogin = document.getElementById('modal-body-login');
                 const alertSuccess = document.createElement("div")
                 alertSuccess.className = "alert alert-success";
