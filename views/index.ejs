@@ -11,6 +11,10 @@
           data-bs-target="#loginComprarModal">Comprar Ingressos</button>
       </div>
       <div class="row justify-content-center w-100">
+        <button type="button" class="btn btn-info w-75 my-2 mx-4" data-bs-toggle="modal"
+          data-bs-target="#loginBaixarModal">Baixar ingressos</button>
+      </div>
+      <div class="row justify-content-center w-100">
         <button type="button" class="btn btn-secondary w-75 my-2 mx-4" data-bs-toggle="modal"
           onclick="window.open('https://wa.me/557399435704?text=Vim%20do%20site', '_blank')">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-whatsapp"
@@ -49,25 +53,25 @@
       </div>
     </div>
 
-    <div class="modal fade" id="loginTrocarModal" tabindex="-1" aria-labelledby="loginTrocarModalLabel"
+    <div class="modal fade" id="loginBaixarModal" tabindex="-1" aria-labelledby="loginBaixarModalLabel"
       aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="loginTrocarModalLabel">Autenticação</h1>
+            <h1 class="modal-title fs-5" id="loginBaixarModalLabel">Autenticação</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form id="loginForm">
               <div class="mb-3">
                 <label for="cpf-input" class="col-form-label">CPF:</label>
-                <input type="text" class="form-control cpf-input-troca" placeholder="Digite seu CPF"
+                <input type="text" class="form-control cpf-input-baixar" placeholder="Digite seu CPF"
                   oninput="inputformatCPF(this)" required>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-secondary" onclick="authenticateUser('trocar')">Entrar</button>
+            <button type="submit" class="btn btn-secondary" onclick="authenticateUser('baixar')">Entrar</button>
           </div>
         </div>
       </div>
@@ -87,7 +91,7 @@
       }
 
       function authenticateUser(input) {
-        const cpfInput = (input === "comprar") ? document.getElementsByClassName('cpf-input-comprar')[0].value : document.getElementsByClassName('cpf-input-troca')[0].value;
+        const cpfInput = (input === "comprar") ? document.getElementsByClassName('cpf-input-comprar')[0].value : document.getElementsByClassName('cpf-input-baixar')[0].value;
         const cpfError = document.getElementById('cpfError');
 
         if (cpfInput.length === 14) {
@@ -96,6 +100,7 @@
             .then(data => {
               localStorage.setItem('userCPF', cpfInput);
               if (data.user !== null) {
+                localStorage.setItem("ingresso", "baixar")
                 const modalBodyLogin = document.getElementById('modal-body-login');
                 const alertSuccess = document.createElement("div")
                 alertSuccess.className = "alert alert-success";

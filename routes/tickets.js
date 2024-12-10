@@ -36,6 +36,10 @@ router.get('/select-tickets', (req, res) => {
     res.render('tickets/select-tickets');
 });
 
+router.get('/download-tickets-page', (req, res) => {
+    res.render('tickets/download-tickets');
+});
+
 router.get('/select-seats', (req, res) => {
     res.render('tickets/select-seats');
 });
@@ -114,7 +118,7 @@ router.get('/checkAssentosDisponiveis/:sessao', async (req, res) => {
 });
 
 router.post('/getAssento/:sessao/:andar/:fileira/:numero/:userId/:cpf', async (req, res) => {
-    const { sessao, andar, fileira, numero, userId, cpf} = req.params;
+    const { sessao, andar, fileira, numero, userId, cpf } = req.params;
     const qrcode_content = {
         "cpf": cpf,
         "andar": andar,
@@ -125,7 +129,7 @@ router.post('/getAssento/:sessao/:andar/:fileira/:numero/:userId/:cpf', async (r
     }
     const { data, error } = await supabase
         .from('Cadeiras')
-        .update({ disponivel: false, payment: 'P', user: userId, qrcode_content: qrcode_content})
+        .update({ disponivel: false, payment: 'P', user: userId, qrcode_content: qrcode_content })
         .eq('sessao', sessao)
         .eq('andar', andar)
         .eq('fileira', fileira)
@@ -171,6 +175,17 @@ router.get('/search-seats-pending-general', async (req, res) => {
     res.json({ cadeiras: data });
 });
 
+router.get('/search-seats-general/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const { data, error } = await supabase
+        .from('Cadeiras')
+        .select()
+        .eq('payment', 'S')
+        .eq('user', userId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ cadeiras: data });
+});
+
 router.get('/search-seats-paid/:cpf', async (req, res) => {
     const { cpf } = req.params;
     const { data, error } = await supabase
@@ -188,6 +203,95 @@ router.get('/search-seats-paid/:cpf', async (req, res) => {
     if (error) return res.status(500).json({ error: errorLugares.message });
     res.json({ cadeiras: lugares });
 });
+
+router.get('/download-tickets/:idCadeira', async (req, res) => {
+    const { idCadeira } = req.params;
+
+    async function generateQRCode(data) {
+        return await QRCode.toBuffer(JSON.stringify(data));
+    }
+
+    function measureTextWidth(text, font) {
+        const canvas = createCanvas(1, 1);
+        const context = canvas.getContext('2d');
+        context.font = font;
+        return context.measureText(text).width;
+    }
+
+    async function createEventTicket(user) {
+        try {
+            const sessao = user.sessao == 1 ? 'sessao1.png' : 'sessao2.png';
+            const image = await Jimp.read(path.join(__dirname, '..', 'public', 'images', sessao));
+
+            const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+            const text1 = `${user.nome} | ${user.cpf}`;
+            const text2 = `Sessão: ${user.sessao}, Andar: ${user.andar}, Fileira: ${user.fileira}, Poltrona: ${user.numero}`;
+
+            const textWidth1 = measureTextWidth(text1, '32px Arial');
+            const textWidth2 = measureTextWidth(text2, '32px Arial');
+            const centerX = image.bitmap.width / 2;
+
+            image.print(font, centerX - textWidth1 / 2, 590, text1);
+            image.print(font, centerX - textWidth2 / 2, 625, text2);
+
+            const qrCode = await generateQRCode(user);
+            const qrImage = await Jimp.read(qrCode);
+            qrImage.resize(300, 300);
+            image.composite(qrImage, 210, 700);
+
+            return new Promise((resolve, reject) => {
+                image.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(buffer);
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Erro ao criar o ticket:', err);
+            throw err;
+        }
+    }
+
+    const { data: cadeiraSearch, error: erroCadeiraSearch } = await supabase
+        .from('Cadeiras')
+        .select()
+        .eq('id', idCadeira);
+
+    if (erroCadeiraSearch) {
+        return res.status(500).json({ message: 'Erro buscar cadeira', erroCadeiraSearch });
+    }
+
+    const { data: user, error: erroUser } = await supabase
+        .from('Users')
+        .select()
+        .eq('id', cadeiraSearch[0].user);
+
+    if (erroUser) {
+        return res.status(500).json({ message: 'Erro ao buscar usuário', erroUser });
+    }
+
+    try {
+        if (!cadeiraSearch[0].qrcode_content) {
+            return res.status(500).json({ message: 'qrcode_content é nulo' });
+        }
+
+        const userJson = {
+            ...cadeiraSearch[0].qrcode_content,
+            email: user[0].email,
+            nome: user[0].nome,
+        };
+
+        const ticketBuffer = await createEventTicket(userJson);
+        res.set('Content-Type', 'image/png');
+        res.set('Content-Disposition', `attachment; filename=ingresso_${user[0].nome}_cadeira${cadeiraSearch[0].numero}.png`);
+        res.send(ticketBuffer);
+    } catch (err) {
+        return res.status(500).json({ message: 'Erro ao gerar o ticket', error: err.message });
+    }
+});
+
 
 router.get('/confirm-Payment/:idCadeira', async (req, res) => {
     async function generateQRCode(data) {
@@ -274,7 +378,7 @@ router.get('/confirm-Payment/:idCadeira', async (req, res) => {
     if (erroUser) return res.status(500).json({ message: 'Erro ao buscar usuario', erroUser });
 
     try {
-        if (!cadeiraSearch[0].qrcode_content || cadeiraSearch[0].qrcode_content == null) return res.status(500).json({ message: 'qrcode_content null'});
+        if (!cadeiraSearch[0].qrcode_content || cadeiraSearch[0].qrcode_content == null) return res.status(500).json({ message: 'qrcode_content null' });
         const userJson = {
             ...cadeiraSearch[0].qrcode_content,
             email: user[0].email,
@@ -299,7 +403,7 @@ router.get('/deny-payment/:idCadeira', async (req, res) => {
     const { idCadeira } = req.params;
     const { data, error } = await supabase
         .from('Cadeiras')
-        .update({ disponivel: true, payment: 'F', user: null, qrcode_content: null})
+        .update({ disponivel: true, payment: 'F', user: null, qrcode_content: null })
         .eq('id', idCadeira);
     if (error) return res.status(500).json({ message: 'Erro ao atualizar a linha', error });
     return res.status(200).json({ message: 'Pagamento negado', id: idCadeira });
@@ -369,7 +473,7 @@ router.post('/authenticate', async (req, res) => {
     return res.status(200).json({ message: 'Usuário criado', success: true, user: data[0] });
 });
 
-router.get('/created-qrcode-json', async (req, res) => {
+/*router.get('/created-qrcode-json', async (req, res) => {
     let qtd_cadeiras = 0;
     const { data: users, error: errorUsers } = await supabase
         .from('Users')
@@ -418,6 +522,6 @@ router.get('/created-qrcode-json', async (req, res) => {
     }
     console.log("quantidade de cadeiras modificadas: " + qtd_cadeiras);
     res.status(200).send();
-});
+});*/
 
 module.exports = router;

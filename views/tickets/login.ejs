@@ -31,22 +31,22 @@
             function authenticate(event) {
                 event.preventDefault();
 
-                // Obtém os valores do formulário
                 const userCPF = document.getElementById("userCPF").value;
                 const password = document.getElementById("password").value;
                 const userCPFLocalStorage = localStorage.getItem("userCPF");
 
-                // Verifica se o usuário e senha estão corretos
                 if (userCPF == userCPFLocalStorage) {
                     fetch(`search-password/${userCPF}/${password}`)
                         .then(response => response.json())
                         .then(data => {
                             if(data.user != null){
+                                const ingresso = localStorage.getItem("ingresso");
                                 localStorage.setItem("userEmail", data.user.email);
                                 localStorage.setItem("userName", data.user.nome);
                                 localStorage.setItem("userPhone", data.user.phone);
-                                localStorage.setItem("userId", data.user.id)
-                                window.location.href = "/select-tickets";
+                                localStorage.setItem("userId", data.user.id);
+                                if(ingresso == "baixar") window.location.href = "/download-tickets-page";
+                                else window.location.href = "/select-tickets";
                             }
                         })
                         .catch(error => console.error('Erro de autenticação:', error));
