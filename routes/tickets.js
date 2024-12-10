@@ -231,7 +231,7 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
             console.log(`[INFO] Selecionando imagem da sessão: ${sessao}`);
             const image = await Jimp.read(path.join(__dirname, '..', 'public', 'images', sessao));
 
-            const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+            const font = await Jimp.loadFont(path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white.fnt'));
             console.log('[INFO] Fonte carregada com sucesso.');
 
             const text1 = `${user.nome} | ${user.cpf}`;
