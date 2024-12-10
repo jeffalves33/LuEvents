@@ -231,7 +231,7 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
             console.log(`[INFO] Selecionando imagem da sessão: ${sessao}`);
             const image = await Jimp.read(path.join(__dirname, '..', 'public', 'images', sessao));
 
-            const font = await Jimp.loadFont(path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white.fnt'));
+            const font = await Jimp.loadFont(path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white', 'open-sans-32-white.fnt'));
             console.log('[INFO] Fonte carregada com sucesso.');
 
             const text1 = `${user.nome} | ${user.cpf}`;
@@ -353,7 +353,7 @@ router.get('/confirm-Payment/:idCadeira', async (req, res) => {
             const image = await Jimp.read(imagePath);
             console.log('[INFO] Imagem da sessão carregada com sucesso.');
 
-            const fontPath = path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white.fnt');
+            const fontPath = path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white', 'open-sans-32-white.fnt');
             console.log(`[INFO] Carregando fonte do caminho: ${fontPath}`);
             const font = await Jimp.loadFont(fontPath);
             console.log('[INFO] Fonte carregada com sucesso.');
