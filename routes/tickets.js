@@ -231,7 +231,8 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
             console.log(`[INFO] Selecionando imagem da sessão: ${sessao}`);
             const image = await Jimp.read(path.join(__dirname, '..', 'public', 'images', sessao));
 
-            const font = await Jimp.loadFont(path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white', 'open-sans-32-white.fnt'));
+            const fontPath = path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white', 'open-sans-32-white.fnt');
+            const font = await Jimp.loadFont(fontPath);
             console.log('[INFO] Fonte carregada com sucesso.');
 
             const text1 = `${user.nome} | ${user.cpf}`;
@@ -241,8 +242,14 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
             const textWidth2 = measureTextWidth(text2, "32px Arial");
             const centerX = image.bitmap.width / 2;
 
-            image.print(font, centerX - (textWidth1 / 2), 590, text1);
-            image.print(font, centerX - (textWidth2 / 2), 625, text2);
+            // Ajusta a posição do texto de acordo com a resolução da imagem
+            const margin = 20; // margem para não colar nas bordas
+            const adjustedCenterX1 = Math.min(centerX - (textWidth1 / 2), image.bitmap.width - margin);
+            const adjustedCenterX2 = Math.min(centerX - (textWidth2 / 2), image.bitmap.width - margin);
+
+            // Ajusta para a largura máxima da imagem (evita que texto ultrapasse as bordas)
+            image.print(font, adjustedCenterX1, 590, text1);
+            image.print(font, adjustedCenterX2, 625, text2);
 
             const qrCode = await generateQRCode(user);
             const qrImage = await Jimp.read(qrCode);
@@ -330,8 +337,6 @@ router.get('/download-tickets/:idCadeira', async (req, res) => {
     }
 });
 
-
-
 router.get('/confirm-Payment/:idCadeira', async (req, res) => {
     async function generateQRCode(data) {
         return await QRCode.toBuffer(JSON.stringify(data));
@@ -344,53 +349,44 @@ router.get('/confirm-Payment/:idCadeira', async (req, res) => {
     }
     async function createEventTicket(user) {
         try {
-            console.log('[INFO] Iniciando criação do ticket para o usuário:', user);
-
             const sessao = user.sessao == 1 ? 'sessao1.png' : 'sessao2.png';
-            const imagePath = path.join(__dirname, '..', 'public', 'images', sessao);
-            console.log(`[INFO] Selecionando imagem da sessão: ${imagePath}`);
-
-            const image = await Jimp.read(imagePath);
-            console.log('[INFO] Imagem da sessão carregada com sucesso.');
+            console.log(`[INFO] Selecionando imagem da sessão: ${sessao}`);
+            const image = await Jimp.read(path.join(__dirname, '..', 'public', 'images', sessao));
 
             const fontPath = path.join(__dirname, '..', 'public', 'fonts', 'open-sans', 'open-sans-32-white', 'open-sans-32-white.fnt');
-            console.log(`[INFO] Carregando fonte do caminho: ${fontPath}`);
             const font = await Jimp.loadFont(fontPath);
             console.log('[INFO] Fonte carregada com sucesso.');
 
             const text1 = `${user.nome} | ${user.cpf}`;
             const text2 = `Sessão: ${user.sessao}, Andar: ${user.andar}, Fileira: ${user.fileira}, Poltrona: ${user.numero}`;
-            console.log('[INFO] Textos a serem impressos:', { text1, text2 });
 
             const textWidth1 = measureTextWidth(text1, "32px Arial");
             const textWidth2 = measureTextWidth(text2, "32px Arial");
-            console.log('[INFO] Largura dos textos calculada:', { textWidth1, textWidth2 });
-
             const centerX = image.bitmap.width / 2;
-            image.print(font, centerX - (textWidth1 / 2), 590, text1);
-            image.print(font, centerX - (textWidth2 / 2), 625, text2);
-            console.log('[INFO] Textos impressos na imagem.');
 
-            console.log('[INFO] Gerando QR Code...');
+            // Ajusta a posição do texto de acordo com a resolução da imagem
+            const margin = 20; // margem para não colar nas bordas
+            const adjustedCenterX1 = Math.min(centerX - (textWidth1 / 2), image.bitmap.width - margin);
+            const adjustedCenterX2 = Math.min(centerX - (textWidth2 / 2), image.bitmap.width - margin);
+
+            // Ajusta para a largura máxima da imagem (evita que texto ultrapasse as bordas)
+            image.print(font, adjustedCenterX1, 590, text1);
+            image.print(font, adjustedCenterX2, 625, text2);
+
             const qrCode = await generateQRCode(user);
-            console.log('[INFO] QR Code gerado com sucesso.');
-
             const qrImage = await Jimp.read(qrCode);
-            console.log('[INFO] Imagem do QR Code carregada.');
             qrImage.resize(300, 300);
-            console.log('[INFO] QR Code redimensionado para 300x300.');
-
             image.composite(qrImage, 210, 700);
-            console.log('[INFO] QR Code combinado na imagem principal.');
+
+            console.log('[INFO] QR Code adicionado ao ticket.');
 
             return new Promise((resolve, reject) => {
-                console.log('[INFO] Gerando buffer da imagem...');
                 image.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
                     if (err) {
-                        console.error('[ERROR] Erro ao gerar buffer da imagem:', err);
+                        console.error('[ERROR] Erro ao converter imagem em buffer:', err);
                         reject(err);
                     } else {
-                        console.log('[INFO] Buffer da imagem gerado com sucesso.');
+                        console.log('[INFO] Ticket gerado com sucesso.');
                         resolve(buffer);
                     }
                 });
@@ -398,10 +394,9 @@ router.get('/confirm-Payment/:idCadeira', async (req, res) => {
 
         } catch (err) {
             console.error('[ERROR] Erro ao criar o ticket:', err);
-            throw err; // Repassa o erro para o contexto superior
+            throw err;
         }
     }
-
     async function sendEmail(recipient, ticketBuffer) {
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
@@ -428,6 +423,7 @@ router.get('/confirm-Payment/:idCadeira', async (req, res) => {
 
         await transporter.sendMail(mailOptions);
     }
+
     const { idCadeira } = req.params;
     const { data: cadeiraSearch, error: erroCadeiraSearch } = await supabase
         .from('Cadeiras')
