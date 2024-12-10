@@ -396,13 +396,13 @@ router.get('/confirm-Payment/:idCadeira', async (req, res) => {
             host: 'smtp.gmail.com',
             port: 465,
             auth: {
-                user: 'jeffalvess6142@gmail.com',
-                pass: 'zevfuptsmzojjccp'
+                user: 'espetaculoecg@gmail.com',
+                pass: 'vykstszlqkynelxw'
             }
         });
 
         const mailOptions = {
-            from: 'jeffalvess6142@gmail.com',
+            from: 'espetaculoecg@gmail.com',
             to: recipient.email,
             subject: 'Ingresso do Evento',
             text: 'Segue em anexo o seu ingresso para o evento.',
