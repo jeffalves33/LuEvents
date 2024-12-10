@@ -251,7 +251,7 @@
 
           try {
             const reservationPromises = assentos.map(({ andar, fileira, numero }) =>
-              fetch(`/getAssento/${sessao}/${andar}/${fileira}/${numero}/${userId}`, { method: 'POST' })
+              fetch(`/getAssento/${sessao}/${andar}/${fileira}/${numero}/${userId}/${cpf}`, { method: 'POST' })
                 .then(response => response.json())
             );
 

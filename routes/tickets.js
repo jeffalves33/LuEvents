@@ -113,11 +113,19 @@ router.get('/checkAssentosDisponiveis/:sessao', async (req, res) => {
     else res.json({ disponivel: false, assentosDisponiveis });
 });
 
-router.post('/getAssento/:sessao/:andar/:fileira/:numero/:userId', async (req, res) => {
-    const { sessao, andar, fileira, numero, userId } = req.params;
+router.post('/getAssento/:sessao/:andar/:fileira/:numero/:userId/:cpf', async (req, res) => {
+    const { sessao, andar, fileira, numero, userId, cpf} = req.params;
+    const qrcode_content = {
+        "cpf": cpf,
+        "andar": andar,
+        "idUser": userId,
+        "numero": numero,
+        "sessao": sessao,
+        "fileira": fileira
+    }
     const { data, error } = await supabase
         .from('Cadeiras')
-        .update({ disponivel: false, payment: 'P', user: userId })
+        .update({ disponivel: false, payment: 'P', user: userId, qrcode_content: qrcode_content})
         .eq('sessao', sessao)
         .eq('andar', andar)
         .eq('fileira', fileira)
