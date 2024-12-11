@@ -11,6 +11,24 @@
             </div>
 
             <div class="row mt-3">
+                <p class="m-1" style="color: #89ea55;">Senha do usuário</p>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="senha-input" placeholder="Digite um CPF"
+                            oninput="inputformatCPF(this)" required>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <button type="submit" class="btn btn-secondary" onclick="buscarUsuarioSenha()">Buscar</button>
+                </div>
+            </div>
+            <div id="senha-container" class="mb-3">
+                <!-- Os assentos serão exibidos aqui -->
+            </div>
+
+            <div class="row mt-3">
                 <p class="m-1" style="color: #89ea55;">Poltronas pendentes (CPF)</p>
             </div>
             <div class="row">
@@ -100,6 +118,30 @@
                         elementRemove.remove();
                     })
                     .catch(error => console.error('Erro ao negar pagamento:', error));
+            }
+
+            function buscarUsuarioSenha() {
+                const cpfInput = document.getElementById('senha-input').value;
+                if (cpfInput.length === 14) {
+                    fetch(`search-password/${cpfInput}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const assentosContainer = document.getElementById('senha-container');
+                            assentosContainer.innerHTML = '';
+
+                            if (data.senha) {
+                                const assentoInfo = `
+                                    <div class="col-12">
+                                        <p class="p-1 bg-light rounded">${data.senha}</p>
+                                    </div>
+                                `;
+                                assentosContainer.innerHTML += assentoInfo;
+                            } else {
+                                assentosContainer.innerHTML = '<p class="text-warning">Nenhuma senha encontrada.</p>';
+                            }
+                        })
+                        .catch(error => console.error('Erro ao buscar os assentos:', error));
+                }
             }
 
             function buscarUsuarioPendente() {

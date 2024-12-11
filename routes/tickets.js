@@ -148,6 +148,16 @@ router.get('/confirm-seats', async (req, res) => {
     res.render('tickets/confirm-seats');
 });
 
+router.get('/search-password/:cpf', async (req, res) => {
+    const { cpf } = req.params;
+    const { data, error } = await supabase
+        .from('Users')
+        .select('senha')
+        .eq('cpf', cpf);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ senha: data[0].senha });
+});
+
 router.get('/search-seats-pending/:cpf', async (req, res) => {
     const { cpf } = req.params;
     const { data, error } = await supabase
